@@ -11,21 +11,11 @@ pipeline {
         ECR_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
     }
 
-    stages {
+   stages {
 
         stage('Checkout') {
             steps {
                 checkout scm
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh """
-                docker build -t ${ECR_REPO}:${IMAGE_TAG} .
-                docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_URI}:${IMAGE_TAG}
-                docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_URI}:latest
-                """
             }
         }
 
@@ -38,9 +28,12 @@ pipeline {
             }
         }
 
-        stage('Push to ECR') {
+        stage('Build & Push Image') {
             steps {
                 sh """
+                docker build -t ${ECR_REPO}:${IMAGE_TAG} .
+                docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_URI}:${IMAGE_TAG}
+                docker tag ${ECR_REPO}:${IMAGE_TAG} ${ECR_URI}:latest
                 docker push ${ECR_URI}:${IMAGE_TAG}
                 docker push ${ECR_URI}:latest
                 """
@@ -51,10 +44,10 @@ pipeline {
             steps {
                 sh """
                 aws ecs update-service \
-                    --cluster ${ECS_CLUSTER} \
-                    --service ${ECS_SERVICE} \
-                    --force-new-deployment \
-                    --region ${AWS_REGION}
+                  --cluster ${ECS_CLUSTER} \
+                  --service ${ECS_SERVICE} \
+                  --force-new-deployment \
+                  --region ${AWS_REGION}
                 """
             }
         }
