@@ -10,6 +10,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "https://rozana-projects.online",
+    methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
 
