@@ -2,10 +2,11 @@ const db = require("../db");
 
 // ================= CREATE ORDER =================
 exports.createOrder = (req, res) => {
-  const { userId, items, totalAmount } = req.body;
+  const userId = req.user.id; // 🔐 FROM JWT
+  const { items, totalAmount } = req.body;
 
-  if (!userId || !items || !totalAmount) {
-    return res.status(400).json({ error: "All fields are required" });
+  if (!items || !totalAmount) {
+    return res.status(400).json({ error: "Items and totalAmount required" });
   }
 
   db.pool.query(
@@ -29,9 +30,9 @@ exports.createOrder = (req, res) => {
   );
 };
 
-// ================= GET USER ORDERS =================
+// ================= GET LOGGED-IN USER ORDERS =================
 exports.getOrdersByUser = (req, res) => {
-  const { userId } = req.params;
+  const userId = req.user.id; // 🔐 FROM JWT
 
   db.pool.query(
     "SELECT * FROM orders WHERE user_id = ?",
