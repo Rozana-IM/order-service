@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const auth = require("../middleware/auth.middleware");
-
+const { verifyToken } = require("../middleware/auth.middleware");
 const {
   createOrder,
   getOrdersByUser,
@@ -10,10 +9,8 @@ const {
 } = require("../controllers/order.controller");
 
 /* USER */
-router.post("/orders", auth, createOrder);
-router.get("/orders", auth, getOrdersByUser);
-
-/* ADMIN */
-router.get("/admin/orders", auth, getAllOrders);
+router.post("/orders", verifyToken, createOrder);
+router.get("/orders", verifyToken, getOrdersByUser);
+router.get("/admin/orders", verifyToken, getAllOrders);
 
 module.exports = router;
