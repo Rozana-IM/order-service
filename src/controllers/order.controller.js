@@ -1,106 +1,90 @@
 const db = require("../db");
 
-// =================================================
-// ================= CREATE ORDER =================
-// =================================================
+// ======================================
+// CREATE ORDER
+// ======================================
 
 exports.createOrder = (req, res) => {
 
   const userId = req.user.id;
-  const { items, totalAmount } = req.body;
+  const { items, totalAmount, address } = req.body;
 
-  if (!items || !totalAmount) {
-    return res.status(400).json({
-      error: "Items and totalAmount required",
-    });
+  if (!items || items.length === 0) {
+    return res.status(400).json({ error: "Order items required" });
   }
 
-  db.pool.query(
-    "INSERT INTO orders (user_id, items, total_amount) VALUES (?, ?, ?)",
-    [userId, JSON.stringify(items), totalAmount],
-    (err, result) => {
-
-      if (err) {
-        console.error("❌ Create order error:", err.message);
-        return res.status(500).json({ error: "Database error" });
-      }
-
-      res.status(201).json({
-        order: {
-          id: result.insertId,
-          userId,
-          items,
-          totalAmount,
-        },
-      });
-    }
-  );
-};
-
-
-// =================================================
-// ========== GET LOGGED-IN USER ORDERS ============
-// =================================================
-
-exports.getOrdersByUser = (req, res) => {
-
-  const userId = req.user.id;
-
-  db.pool.query(
-    "SELECT * FROM orders WHERE user_id = ?",
-    [userId],
-    (err, results) => {
-
-      if (err) {
-        console.error("❌ Fetch user orders error:", err.message);
-        return res.status(500).json({ error: "Database error" });
-      }
-
-      const orders = results.map(order => ({
-        id: order.id,
-        userId: order.user_id,
-        items: JSON.parse(order.items),
-        totalAmount: order.total_amount,
-        createdAt: order.created_at,
-      }));
-
-      res.json(orders);
-    }
-  );
-};
-
-
-// =================================================
-// ============== ADMIN — GET ALL ORDERS ===========
-// =================================================
-
-exports.getAllOrders = (req, res) => {
-
-  // ✅ ADMIN CHECK (NEW — IMPORTANT)
-  if (req.user.role !== "admin") {
-    return res.status(403).json({
-      error: "Admin access only",
-    });
+  if (!address) {
+    return res.status(400).json({ error: "Address required" });
   }
 
+  // 1️⃣ Insert order
   db.pool.query(
-    "SELECT * FROM orders",
-    (err, results) => {
+    "INSERT INTO orders (user_id, total_amount) VALUES (?, ?)",
+    [userId, totalAmount],
+    (err, orderResult) => {
 
       if (err) {
-        console.error("❌ Fetch all orders error:", err.message);
+        console.error("❌ Order creation failed:", err.message);
         return res.status(500).json({ error: "Database error" });
       }
 
-      const orders = results.map(order => ({
-        id: order.id,
-        userId: order.user_id,
-        items: JSON.parse(order.items),
-        totalAmount: order.total_amount,
-        createdAt: order.created_at,
-      }));
+      const orderId = orderResult.insertId;
 
-      res.json(orders);
+      // 2️⃣ Insert order items
+      const itemsValues = items.map(item => [
+        orderId,
+        item.product_id,
+        item.product_name,
+        item.price,
+        item.quantity,
+        item.image_url
+      ]);
+
+      db.pool.query(
+        "INSERT INTO order_items (order_id, product_id, product_name, price, quantity, image_url) VALUES ?",
+        [itemsValues],
+        (err) => {
+
+          if (err) {
+            console.error("❌ Order items error:", err.message);
+            return res.status(500).json({ error: "Items insert failed" });
+          }
+
+          // 3️⃣ Insert address
+          db.pool.query(
+            `INSERT INTO order_address 
+            (order_id, full_name, phone, address_line1, address_line2, city, state, pincode, country)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              orderId,
+              address.full_name,
+              address.phone,
+              address.address_line1,
+              address.address_line2 || "",
+              address.city,
+              address.state,
+              address.pincode,
+              address.country || "India"
+            ],
+            (err) => {
+
+              if (err) {
+                console.error("❌ Address insert error:", err.message);
+                return res.status(500).json({ error: "Address insert failed" });
+              }
+
+              res.status(201).json({
+                message: "Order created successfully",
+                orderId: orderId
+              });
+
+            }
+          );
+
+        }
+      );
+
     }
   );
+
 };
