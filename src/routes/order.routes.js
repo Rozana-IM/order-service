@@ -17,5 +17,6 @@ router.get("/orders", verifyToken, getOrdersByUser);
 router.get("/orders/:id", verifyToken, getOrderDetails);
 
 router.get("/admin/orders", verifyToken, getAllOrders);
+router.post("/orders/payment-update", updatePaymentStatus);
 
 module.exports = router;
