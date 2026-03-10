@@ -207,3 +207,29 @@ exports.getAllOrders = (req, res) => {
   );
 
 };
+exports.updatePaymentStatus = (req,res)=>{
+
+const { orderId, status } = req.body;
+
+db.pool.query(
+"UPDATE orders SET payment_status=? WHERE id=?",
+[status,orderId],
+(err)=>{
+
+if(err){
+
+console.error("Payment update error:",err.message);
+
+return res.status(500).json({error:"Update failed"});
+
+}
+
+res.json({
+message:"Order payment updated"
+});
+
+}
+
+);
+
+};
