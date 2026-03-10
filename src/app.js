@@ -20,6 +20,9 @@ app.use(
 // ================= DB =================
 db.connect();
 
+// ================= Start SQS Worker =================
+require("./workers/payment.worker");
+
 // ================= Routes =================
 app.use(orderRoutes);
 
@@ -27,7 +30,8 @@ app.use(orderRoutes);
 app.get("/health", (req, res) => {
   res.status(200).send("Order Service is healthy");
 });
-app.get("/orders/health", (req,res)=>{
+
+app.get("/orders/health", (req, res) => {
   res.send("Order Service healthy");
 });
 
@@ -35,4 +39,3 @@ app.get("/orders/health", (req,res)=>{
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Order Service running on port ${PORT}`);
 });
-
