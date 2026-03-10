@@ -9,35 +9,44 @@ const queueUrl = process.env.SQS_QUEUE_URL;
 
 async function pollQueue(){
 
-const command = new ReceiveMessageCommand({
-QueueUrl: queueUrl,
-MaxNumberOfMessages: 5,
-WaitTimeSeconds: 10
-});
+  const command = new ReceiveMessageCommand({
+    QueueUrl: queueUrl,
+    MaxNumberOfMessages: 5,
+    WaitTimeSeconds: 10
+  });
 
-const data = await sqs.send(command);
+  const data = await sqs.send(command);
 
-if(!data.Messages) return;
+  if(!data.Messages) return;
 
-for(const msg of data.Messages){
+  for(const msg of data.Messages){
 
-const event = JSON.parse(msg.Body);
+    const event = JSON.parse(msg.Body);
 
-if(event.type === "PAYMENT_SUCCESS"){
+    if(event.type === "PAYMENT_SUCCESS"){
 
-db.pool.query(
-"UPDATE orders SET payment_status=? WHERE id=?",
-[event.status,event.orderId]
-);
+      db.pool.query(
+        `UPDATE orders
+         SET payment_status=?
+         WHERE id=? AND payment_status!='PAID'`,
+        [event.status,event.orderId],
+        (err)=>{
+          if(err){
+            console.error("Order update error:",err.message);
+          }else{
+            console.log("Order payment updated:",event.orderId);
+          }
+        }
+      );
 
-}
+    }
 
-await sqs.send(new DeleteMessageCommand({
-QueueUrl: queueUrl,
-ReceiptHandle: msg.ReceiptHandle
-}));
+    await sqs.send(new DeleteMessageCommand({
+      QueueUrl: queueUrl,
+      ReceiptHandle: msg.ReceiptHandle
+    }));
 
-}
+  }
 
 }
 
