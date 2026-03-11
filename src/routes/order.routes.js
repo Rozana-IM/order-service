@@ -8,21 +8,38 @@ const {
   getOrdersByUser,
   getAllOrders,
   getOrderDetails,
-  updatePaymentStatus   
+  updatePaymentStatus
 } = require("../controllers/order.controller");
 
-/* USER ROUTES */
 
+/* =========================
+   USER ROUTES
+========================= */
+
+// Create order
 router.post("/orders", verifyToken, createOrder);
+
+// Get logged-in user orders
 router.get("/orders", verifyToken, getOrdersByUser);
+
+// Get specific order
 router.get("/orders/:id", verifyToken, getOrderDetails);
 
-/* ADMIN */
 
+/* =========================
+   ADMIN ROUTES
+========================= */
+
+// Get all orders (admin)
 router.get("/admin/orders", verifyToken, getAllOrders);
 
-/* PAYMENT UPDATE */
 
-router.post("/orders/payment-update", updatePaymentStatus);
+/* =========================
+   PAYMENT SERVICE ROUTE
+========================= */
+
+// Called by payment service / SQS worker
+router.post("/orders/:id/payment", updatePaymentStatus);
+
 
 module.exports = router;
