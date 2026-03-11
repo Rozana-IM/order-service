@@ -13,7 +13,7 @@ RUN npm install
 COPY . .
 
 # Expose port (change if your app uses another port)
-EXPOSE 4001
+EXPOSE 5000
 
 # ✅ CORRECT ENTRY POINT
 CMD ["node", "src/app.js"]
