@@ -8,7 +8,7 @@ const {
   getOrdersByUser,
   getAllOrders,
   getOrderDetails,
-  updatePaymentStatus   // ⭐ THIS WAS MISSING
+  updatePaymentStatus   
 } = require("../controllers/order.controller");
 
 /* USER ROUTES */
