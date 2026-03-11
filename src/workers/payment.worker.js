@@ -12,8 +12,8 @@ async function pollQueue(){
   const command = new ReceiveMessageCommand({
     QueueUrl: queueUrl,
     MaxNumberOfMessages: 5,
-    WaitTimeSeconds: 10
-  });
+    WaitTimeSeconds: 20, 
+    VisibilityTimeout: 30  });
 
   const data = await sqs.send(command);
 
@@ -22,6 +22,7 @@ async function pollQueue(){
   for(const msg of data.Messages){
 
     const event = JSON.parse(msg.Body);
+    console.log("Received event:", event);
 
     if(event.type === "PAYMENT_SUCCESS"){
 
@@ -50,4 +51,20 @@ async function pollQueue(){
 
 }
 
-setInterval(pollQueue, 5000);
+}catch(err){
+
+    console.error("SQS worker error:", err.message);
+
+  }
+
+}
+
+/* CONTINUOUS POLLING LOOP */
+
+async function startWorker(){
+  while(true){
+    await pollQueue();
+  }
+}
+
+startWorker();
