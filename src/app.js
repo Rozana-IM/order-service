@@ -15,6 +15,8 @@ MIDDLEWARE
 
 app.use(express.json());
 
+const cors = require("cors");
+
 app.use(cors({
   origin: [
     "https://rozana-projects.online",
@@ -24,6 +26,8 @@ app.use(cors({
   allowedHeaders: ["Content-Type","Authorization"],
   credentials: true
 }));
+
+app.options("*", cors());
 
 /* ===============================
 DATABASE CONNECTION
