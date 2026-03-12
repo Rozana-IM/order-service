@@ -1,43 +1,35 @@
 const express = require("express");
-const cors = require("cors");  // Move up
-const db = require("./db");
-const orderRoutes = require("./routes/order.routes");
+const cors = require("cors");
 
-require("./workers/payment.worker");
+// ... your other requires ...
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;  
+
+// SAME CORS for both services
+const allowedOrigins = [
+  "https://rozana-projects.online",
+  "https://d1u1ckd80xkseo.cloudfront.net",
+  "http://localhost:3000"  // Add for local dev
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 204
+}));
 
 app.use(express.json());
 
-app.use(cors({
-  origin: [
-    "https://rozana-projects.online",
-    "https://d1u1ckd80xkseo.cloudfront.net"
-  ],
-  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"],
-  credentials: true
-}));
-
-app.options("*", cors());
-
-db.connect();
-
-app.get("/health", (req, res) => {
-  res.status(200).send("Order Service healthy");
-});
-
-app.get("/orders/health", (req, res) => {
-  res.status(200).send("Order Service healthy");
-});
-
-app.use(orderRoutes);
-
-app.use((req, res) => {
-  res.status(404).json({ error: "Route not found" });
-});
-
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`✅ Order Service running on port ${PORT}`);
-});
+// ... rest of your code (db.connect(), routes, health checks) ...
