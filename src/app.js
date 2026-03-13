@@ -1,13 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 const { createOrder, getOrdersByUser, getOrderDetails } = require("./controllers/order.controller");
-const jwt = require("jsonwebtoken");
 
 const app = express();
-app.use(express.json());
 
-// 🔥 ALL DOMAINS CORS
-const cors = require("cors");
+app.use(express.json());
 
 app.use(cors({
   origin: [
@@ -21,11 +18,14 @@ app.use(cors({
 
 app.options("*", cors());
 
-// 🔥 DIRECT ROUTES - NO SUBPATHS
+// ROUTES
 app.post("/orders", createOrder);
 app.get("/orders", getOrdersByUser);
 app.get("/orders/:id", getOrderDetails);
-app.get("/health", (req, res) => res.json({status: "healthy"}));
+
+app.get("/health", (req, res) => {
+  res.json({ status: "healthy" });
+});
 
 app.listen(5000, "0.0.0.0", () => {
   console.log("✅ Order service LIVE");
