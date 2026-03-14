@@ -9,6 +9,7 @@ app.use(express.json());
 app.use(cors({
   origin: [
     "https://rozana-projects.online",
+    "https://www.rozana-projects.online",
     "https://d1u1ckd80xkseo.cloudfront.net"
   ],
   methods: ["GET","POST","PUT","DELETE","OPTIONS"],
