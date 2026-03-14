@@ -129,7 +129,11 @@ const userId = 1; // temporary test user
 
 exports.getOrdersByUser = (req, res) => {
 
-  const userId = req.user.id;
+  const userId = req.user?.id;
+
+  if(!userId){
+    return res.json([]); // or return 401
+  }
 
   const query = `
     SELECT id, total_amount, status, payment_status, created_at
@@ -200,8 +204,8 @@ exports.getOrderDetails = (req, res) => {
 
 exports.getAllOrders = (req, res) => {
 
-  if (req.user.role !== "admin") {
-    return res.status(403).json({
+if (!req.user || req.user.role !== "admin") {
+  return res.status(403).json({
       error: "Admin access only"
     });
   }
