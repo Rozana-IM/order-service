@@ -40,9 +40,6 @@ pipeline {
         sh '''
         #!/bin/bash
         set -eux
-
-        cd order-service
-
         docker build -t $ECR_REPO:$IMAGE_TAG .
 
         docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
