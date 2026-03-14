@@ -36,21 +36,23 @@ pipeline {
         }
 
         stage('Build & Push Image') {
-            steps {
-                sh '''
-                #!/bin/bash
-                set -eux
+    steps {
+        sh '''
+        #!/bin/bash
+        set -eux
 
-                docker build -t $ECR_REPO:$IMAGE_TAG .
+        cd order-service
 
-                docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
-                docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:latest
+        docker build -t $ECR_REPO:$IMAGE_TAG .
 
-                docker push $ECR_URI:$IMAGE_TAG
-                docker push $ECR_URI:latest
-                '''
-            }
-        }
+        docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
+        docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:latest
+
+        docker push $ECR_URI:$IMAGE_TAG
+        docker push $ECR_URI:latest
+        '''
+    }
+}
 
         stage('Create NEW Task Revision') {
             steps {
