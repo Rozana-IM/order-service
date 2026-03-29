@@ -3,6 +3,9 @@ const cors = require("cors");
 const { createOrder, getOrdersByUser, getOrderDetails } = require("./controllers/order.controller");
 
 const app = express();
+const { connect } = require("./db");
+
+connect();
 
 app.use(express.json());
 
