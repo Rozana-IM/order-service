@@ -1,11 +1,12 @@
 const express = require("express");
 const cors = require("cors");
 const { createOrder, getOrdersByUser, getOrderDetails } = require("./controllers/order.controller");
-
-const app = express();
 const { connect } = require("./db");
 
-connect();
+const app = express();
+
+/* ✅ Non-blocking DB connection */
+connect().catch(err => console.error("DB Error:", err));
 
 app.use(express.json());
 
@@ -27,8 +28,9 @@ app.post("/orders", createOrder);
 app.get("/orders", getOrdersByUser);
 app.get("/orders/:id", getOrderDetails);
 
+/* ✅ Health MUST always work */
 app.get("/health", (req, res) => {
-  res.json({ status: "healthy" });
+  res.status(200).send("OK");
 });
 
 app.listen(5000, "0.0.0.0", () => {
