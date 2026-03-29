@@ -6,7 +6,7 @@ const db = require("../db");
 
 exports.createOrder = (req, res) => {
 
-const userId = 1; // temporary test user
+const userId = req.user.id;
   const { items, totalAmount, address } = req.body;
 
   if (!items || items.length === 0) {
