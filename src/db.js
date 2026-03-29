@@ -31,18 +31,12 @@ Test Database Connection
 
 async function connect() {
   try {
-
     const connection = await pool.getConnection();
-
     console.log("✅ Order Service DB connected");
-
     connection.release();
-
   } catch (err) {
+    console.error("❌ DB connection failed:", err.message);
 
-    console.error("❌ Order Service DB connection failed:", err.message);
-
-    process.exit(1); // crash container if DB unavailable
   }
 }
 
