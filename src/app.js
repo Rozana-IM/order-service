@@ -24,8 +24,10 @@ app.use(cors({
 app.options("*", cors());
 
 // ROUTES
-app.post("/orders", createOrder);
-app.get("/orders", getOrdersByUser);
+const { verifyToken } = require("./middleware/auth.middleware");
+
+app.post("/orders", verifyToken, createOrder);
+app.get("/orders", verifyToken, getOrdersByUser);
 app.get("/orders/:id", getOrderDetails);
 
 /* ✅ Health MUST always work */
