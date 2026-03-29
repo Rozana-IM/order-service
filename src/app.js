@@ -28,7 +28,7 @@ const { verifyToken } = require("./middleware/auth.middleware");
 
 app.post("/orders", verifyToken, createOrder);
 app.get("/orders", verifyToken, getOrdersByUser);
-app.get("/orders/:id", getOrderDetails);
+app.get("/orders/:id", verifyToken, getOrderDetails);
 
 /* ✅ Health MUST always work */
 app.get("/health", (req, res) => {
