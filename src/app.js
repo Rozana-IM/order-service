@@ -2,10 +2,11 @@ const express = require("express");
 const cors = require("cors");
 const { createOrder, getOrdersByUser, getOrderDetails } = require("./controllers/order.controller");
 const { connect } = require("./db");
+const { verifyToken } = require("./middleware/auth.middleware");
 
 const app = express();
 
-/* ✅ Non-blocking DB connection */
+/* DB */
 connect().catch(err => console.error("DB Error:", err));
 
 app.use(express.json());
@@ -23,18 +24,17 @@ app.use(cors({
 
 app.options("*", cors());
 
-// ROUTES
-const { verifyToken } = require("./middleware/auth.middleware");
-
+/* ROUTES */
 app.post("/orders", verifyToken, createOrder);
 app.get("/orders", verifyToken, getOrdersByUser);
 app.get("/orders/:id", verifyToken, getOrderDetails);
 
-/* ✅ Health MUST always work */
+/* HEALTH */
 app.get("/health", (req, res) => {
-res.status(200).json({ status: "ok" });
+  res.status(200).json({ status: "ok" });
 });
 
+/* START */
 app.listen(5000, "0.0.0.0", () => {
   console.log("✅ Order service LIVE");
 });
