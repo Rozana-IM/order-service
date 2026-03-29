@@ -30,7 +30,7 @@ app.get("/orders/:id", getOrderDetails);
 
 /* ✅ Health MUST always work */
 app.get("/health", (req, res) => {
-  res.status(200).send("OK");
+res.status(200).json({ status: "ok" });
 });
 
 app.listen(5000, "0.0.0.0", () => {
