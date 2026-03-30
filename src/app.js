@@ -1,14 +1,10 @@
 const express = require("express");
 const cors = require("cors");
-const { createOrder, getOrdersByUser, getOrderDetails } = require("./controllers/order.controller");
 const { connect } = require("./db");
-const { verifyAdmin } = require("../middleware/auth.middleware");
+const { verifyToken } = require("./middleware/auth.middleware");
 
-// ADMIN ROUTE
-router.get("/admin/all", verifyAdmin, getAllOrders);
 const app = express();
 
-/* DB */
 connect().catch(err => console.error("DB Error:", err));
 
 app.use(express.json());
@@ -26,18 +22,15 @@ app.use(cors({
 
 app.options("*", cors());
 
-/* ROUTES */
-const orderRoutes = require("./routes/order.routes");
-
-/* HEALTH FIRST */
+/* ✅ HEALTH (PUBLIC) */
 app.get("/orders/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-/* ROUTES */
+/* ✅ ROUTES */
+const orderRoutes = require("./routes/order.routes");
 app.use("/orders", verifyToken, orderRoutes);
 
-/* START */
 app.listen(5000, "0.0.0.0", () => {
   console.log("✅ Order service LIVE");
 });
