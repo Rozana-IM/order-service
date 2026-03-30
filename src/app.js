@@ -2,8 +2,10 @@ const express = require("express");
 const cors = require("cors");
 const { createOrder, getOrdersByUser, getOrderDetails } = require("./controllers/order.controller");
 const { connect } = require("./db");
-const { verifyToken } = require("./middleware/auth.middleware");
+const { verifyAdmin } = require("../middleware/auth.middleware");
 
+// ADMIN ROUTE
+router.get("/admin/all", verifyAdmin, getAllOrders);
 const app = express();
 
 /* DB */
