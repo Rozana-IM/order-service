@@ -25,9 +25,9 @@ app.use(cors({
 app.options("*", cors());
 
 /* ROUTES */
-app.post("/orders", verifyToken, createOrder);
-app.get("/orders", verifyToken, getOrdersByUser);
-app.get("/orders/:id", verifyToken, getOrderDetails);
+const orderRoutes = require("./routes/order.routes");
+
+app.use("/orders", verifyToken, orderRoutes);
 
 /* HEALTH */
 app.get("/health", (req, res) => {
