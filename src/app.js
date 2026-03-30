@@ -23,7 +23,8 @@ app.use(cors({
 app.options("*", cors());
 
 /* ✅ HEALTH (PUBLIC) */
-app.get("/orders/health", (req, res) => {
+/* ✅ HEALTH (PUBLIC) */
+app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
