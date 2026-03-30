@@ -8,12 +8,14 @@ const {
   getAllOrders
 } = require("../controllers/order.controller");
 
-// USER ROUTES
+const { verifyAdmin } = require("../middleware/auth.middleware");
+
+// USER
 router.post("/", createOrder);
 router.get("/", getOrdersByUser);
 router.get("/:id", getOrderDetails);
 
-// ✅ ADMIN ROUTE (MISSING FIX)
-router.get("/admin/all", getAllOrders);
+// ✅ ADMIN (VERY IMPORTANT)
+router.get("/admin/all", verifyAdmin, getAllOrders);
 
 module.exports = router;
