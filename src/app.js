@@ -32,7 +32,7 @@ const orderRoutes = require("./routes/order.routes");
 app.use("/orders", verifyToken, orderRoutes);
 
 /* HEALTH */
-app.get("/health", (req, res) => {
+app.get("/orders/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
