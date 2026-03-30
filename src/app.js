@@ -29,12 +29,13 @@ app.options("*", cors());
 /* ROUTES */
 const orderRoutes = require("./routes/order.routes");
 
-app.use("/orders", verifyToken, orderRoutes);
-
-/* HEALTH */
+/* HEALTH FIRST */
 app.get("/orders/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
+
+/* ROUTES */
+app.use("/orders", verifyToken, orderRoutes);
 
 /* START */
 app.listen(5000, "0.0.0.0", () => {
