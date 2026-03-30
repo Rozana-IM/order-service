@@ -10,12 +10,12 @@ const {
 
 const { verifyAdmin } = require("../middleware/auth.middleware");
 
-// USER
+// USER ROUTES
 router.post("/", createOrder);
 router.get("/", getOrdersByUser);
 router.get("/:id", getOrderDetails);
 
-// ✅ ADMIN (VERY IMPORTANT)
+// 🔥 ADMIN ROUTE (IMPORTANT)
 router.get("/admin/all", verifyAdmin, getAllOrders);
 
 module.exports = router;
