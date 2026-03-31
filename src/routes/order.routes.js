@@ -10,11 +10,12 @@ const {
 
 const { verifyToken, verifyAdmin } = require("../middleware/auth.middleware");
 
-/* 🔓 PUBLIC (ONLY HEALTH handled in app.js) */
+// PUBLIC ROUTE (VERY IMPORTANT)
+router.post("/", createOrder);
 
-/* 🔐 USER ROUTES */
-router.post("/", verifyToken, createOrder);
+// PROTECTED ROUTES
 router.get("/", verifyToken, getOrdersByUser);
+router.get("/:id", verifyToken, getOrderDetails);
 
 /* 🔐 ADMIN ROUTE */
 router.get("/admin/all", verifyToken, verifyAdmin, getAllOrders);
