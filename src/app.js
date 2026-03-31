@@ -35,6 +35,7 @@ const orderRoutes = require("./routes/order.routes");
 
 /* ✅ APPLY AUTH ONLY INSIDE ROUTES */
 app.use("/orders", orderRoutes);
+app.use("/orders/", orderRoutes); // 🔥 ADD THIS LINE
 
 app.listen(5000, "0.0.0.0", () => {
   console.log("✅ Order service LIVE");
