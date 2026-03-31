@@ -26,6 +26,9 @@ app.options("*", cors());
 app.get("/orders/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "UP" });
+});
 
 /* ✅ LOAD ROUTES */
 const orderRoutes = require("./routes/order.routes");
