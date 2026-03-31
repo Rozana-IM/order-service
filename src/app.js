@@ -22,14 +22,19 @@ app.use(cors({
 
 app.options("*", cors());
 
-/* ✅ HEALTH (PUBLIC & CORRECT) */
-app.get("/health", (req, res) => {
+/* ✅ PUBLIC HEALTH (FIXED) */
+app.get("/orders/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-/* ✅ ROUTES */
+/* ✅ LOAD ROUTES */
 const orderRoutes = require("./routes/order.routes");
-app.use("/orders", verifyToken, orderRoutes);
+
+/* ❌ REMOVE GLOBAL AUTH FROM /orders */
+/* app.use("/orders", verifyToken, orderRoutes); */
+
+/* ✅ APPLY AUTH ONLY INSIDE ROUTES */
+app.use("/orders", orderRoutes);
 
 app.listen(5000, "0.0.0.0", () => {
   console.log("✅ Order service LIVE");
