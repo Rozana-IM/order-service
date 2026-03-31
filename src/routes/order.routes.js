@@ -11,8 +11,7 @@ const {
 const { verifyToken, verifyAdmin } = require("../middleware/auth.middleware");
 
 // PUBLIC
-router.post("/create", createOrder);
-
+router.post("/create", verifyToken, createOrder);
 // SPECIFIC FIRST
 router.get("/admin/all", verifyToken, verifyAdmin, getAllOrders);
 
