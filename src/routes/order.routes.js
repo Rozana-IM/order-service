@@ -20,7 +20,4 @@ router.get("/:id", verifyToken, getOrderDetails);
 /* 🔐 ADMIN ROUTE */
 router.get("/admin/all", verifyToken, verifyAdmin, getAllOrders);
 
-/* 🔐 ORDER DETAILS */
-router.get("/:id", verifyToken, getOrderDetails);
-
 module.exports = router;
