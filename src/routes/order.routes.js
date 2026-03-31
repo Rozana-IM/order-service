@@ -10,14 +10,14 @@ const {
 
 const { verifyToken, verifyAdmin } = require("../middleware/auth.middleware");
 
-// PUBLIC ROUTE (VERY IMPORTANT)
+// PUBLIC
 router.post("/", createOrder);
 
-// PROTECTED ROUTES
+// SPECIFIC FIRST
+router.get("/admin/all", verifyToken, verifyAdmin, getAllOrders);
+
+// GENERAL ROUTES
 router.get("/", verifyToken, getOrdersByUser);
 router.get("/:id", verifyToken, getOrderDetails);
-
-/* 🔐 ADMIN ROUTE */
-router.get("/admin/all", verifyToken, verifyAdmin, getAllOrders);
 
 module.exports = router;
