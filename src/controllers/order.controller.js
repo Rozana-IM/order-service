@@ -53,15 +53,13 @@ exports.createOrder = async (req, res) => {
 const orderItems = items.map(item => [
   orderId,
   item.product_id,
-  item.product_name,
-  item.price,
   item.quantity,
-  item.image_url
+  item.price
 ]);
 
 await db.pool.query(
   `INSERT INTO order_items 
-   (order_id, product_id, product_name, price, quantity, image_url)
+   (order_id, product_id, quantity, price)
    VALUES ?`,
   [orderItems]
 );
