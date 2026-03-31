@@ -48,25 +48,25 @@ exports.createOrder = async (req, res) => {
     // 2️⃣ INSERT ITEMS
     // ================================
 
-    console.log("👉 INSERT ITEMS");
+   console.log("👉 INSERT ITEMS");
 
-    const orderItems = items.map(item => [
-      orderId,
-      item.product_id,
-      item.product_name,
-      item.price,
-      item.quantity,
-      item.image_url
-    ]);
+const orderItems = items.map(item => [
+  orderId,
+  item.product_id,
+  item.product_name,
+  item.price,
+  item.quantity,
+  item.image_url
+]);
 
-    await db.query(
-      `INSERT INTO order_items 
-       (order_id, product_id, product_name, price, quantity, image_url)
-       VALUES ?`,
-      [orderItems]
-    );
+await db.pool.query(
+  `INSERT INTO order_items 
+   (order_id, product_id, product_name, price, quantity, image_url)
+   VALUES ?`,
+  [orderItems]
+);
 
-    console.log("✅ ITEMS INSERTED");
+console.log("✅ ITEMS INSERTED");
 
     // ================================
     // 3️⃣ INSERT ADDRESS
