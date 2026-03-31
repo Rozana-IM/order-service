@@ -6,9 +6,13 @@ const jwt = require("jsonwebtoken");
 
 exports.verifyToken = (req, res, next) => {
 
+  // 🔥 DEBUG LOG (VERY IMPORTANT)
+  console.log("🚨 VERIFY TOKEN HIT:", req.method, req.originalUrl);
+
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    console.log("❌ No token provided");
     return res.status(401).json({
       error: "Token required"
     });
@@ -21,6 +25,8 @@ exports.verifyToken = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = decoded;
+
+    console.log("✅ Token verified:", decoded);
 
     next();
 
@@ -46,6 +52,8 @@ exports.verifyToken = (req, res, next) => {
 ===================================== */
 
 exports.verifyAdmin = (req, res, next) => {
+
+  console.log("🔐 ADMIN CHECK");
 
   if (!req.user || req.user.role !== "admin") {
     return res.status(403).json({
