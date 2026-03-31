@@ -6,8 +6,15 @@ const db = require("../db");
 
 exports.createOrder = (req, res) => {
 
-const userId = req.user.id;
+  console.log("🚀 CREATE ORDER START");
+
+  const userId = req.user?.id;
+  console.log("👤 USER:", userId);
+
   const { items, totalAmount, address } = req.body;
+
+  console.log("📦 ITEMS:", items?.length);
+  console.log("💰 TOTAL:", totalAmount);
 
   if (!items || items.length === 0) {
     return res.status(400).json({
