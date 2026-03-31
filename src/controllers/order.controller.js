@@ -4,129 +4,104 @@ const db = require("../db");
 // ================= CREATE ORDER =================
 // =================================================
 
-exports.createOrder = (req, res) => {
+exports.createOrder = async (req, res) => {
 
   console.log("🚀 CREATE ORDER START");
 
-  const userId = req.user?.id;
-  console.log("👤 USER:", userId);
+  try {
 
-  const { items, totalAmount, address } = req.body;
+    const userId = req.user?.id;
+    const { items, totalAmount, address } = req.body;
 
-  console.log("📦 ITEMS:", items?.length);
-  console.log("💰 TOTAL:", totalAmount);
+    console.log("👤 USER:", userId);
+    console.log("📦 ITEMS:", items?.length);
+    console.log("💰 TOTAL:", totalAmount);
 
-  if (!items || items.length === 0) {
-    return res.status(400).json({
-      error: "Order items required",
-    });
-  }
-
-  if (!totalAmount) {
-    return res.status(400).json({
-      error: "Total amount required",
-    });
-  }
-
-  if (!address) {
-    return res.status(400).json({
-      error: "Delivery address required",
-    });
-  }
-
-  // ================================
-  // 1️⃣ CREATE ORDER
-  // ================================
-
-  const createOrderQuery =
-    "INSERT INTO orders (user_id, total_amount, status, payment_status) VALUES (?, ?, 'pending', 'pending')";
-
-  db.pool.query(
-    createOrderQuery,
-    [userId, totalAmount],
-    (err, orderResult) => {
-
-      if (err) {
-        console.error("❌ Create order error:", err.message);
-        return res.status(500).json({ error: "Database error" });
-      }
-
-      const orderId = orderResult.insertId;
-
-      // ================================
-      // 2️⃣ INSERT ORDER ITEMS
-      // ================================
-
-      const orderItems = items.map(item => [
-        orderId,
-        item.product_id,
-        item.product_name,
-        item.price,
-        item.quantity,
-        item.image_url
-      ]);
-
-      const insertItemsQuery = `
-        INSERT INTO order_items
-        (order_id, product_id, product_name, price, quantity, image_url)
-        VALUES ?
-      `;
-
-      db.pool.query(insertItemsQuery, [orderItems], (err) => {
-
-        if (err) {
-          console.error("❌ Insert order items error:", err.message);
-          return res.status(500).json({ error: "Order items insert failed" });
-        }
-
-        // ================================
-        // 3️⃣ INSERT ADDRESS
-        // ================================
-
-        const addressQuery = `
-          INSERT INTO order_address
-          (order_id, full_name, phone, address_line1, address_line2, city, state, pincode, country)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-
-        db.pool.query(
-          addressQuery,
-          [
-            orderId,
-            address.full_name,
-            address.phone,
-            address.address_line1,
-            address.address_line2 || "",
-            address.city,
-            address.state,
-            address.pincode,
-            address.country || "India"
-          ],
-          (err) => {
-
-            if (err) {
-              console.error("❌ Insert address error:", err.message);
-              return res.status(500).json({ error: "Address insert failed" });
-            }
-
-            // ================================
-            // 4️⃣ SUCCESS RESPONSE
-            // ================================
-
-            res.status(201).json({
-              success: true,
-              message: "Order created successfully",
-              orderId: orderId
-            });
-
-          }
-        );
-
-      });
-
+    if (!items || items.length === 0) {
+      return res.status(400).json({ error: "Order items required" });
     }
-  );
 
+    if (!totalAmount) {
+      return res.status(400).json({ error: "Total amount required" });
+    }
+
+    if (!address) {
+      return res.status(400).json({ error: "Delivery address required" });
+    }
+
+    // ================================
+    // 1️⃣ CREATE ORDER
+    // ================================
+
+    console.log("👉 INSERT ORDER");
+
+    const result = await db.query(
+      "INSERT INTO orders (user_id, total_amount, status, payment_status) VALUES (?, ?, 'pending', 'pending')",
+      [userId, totalAmount]
+    );
+
+    const orderId = result.insertId;
+
+    console.log("✅ ORDER CREATED:", orderId);
+
+    // ================================
+    // 2️⃣ INSERT ITEMS
+    // ================================
+
+    console.log("👉 INSERT ITEMS");
+
+    const orderItems = items.map(item => [
+      orderId,
+      item.product_id,
+      item.product_name,
+      item.price,
+      item.quantity,
+      item.image_url
+    ]);
+
+    await db.query(
+      `INSERT INTO order_items 
+       (order_id, product_id, product_name, price, quantity, image_url)
+       VALUES ?`,
+      [orderItems]
+    );
+
+    console.log("✅ ITEMS INSERTED");
+
+    // ================================
+    // 3️⃣ INSERT ADDRESS
+    // ================================
+
+    console.log("👉 INSERT ADDRESS");
+
+    await db.query(
+      `INSERT INTO order_address
+      (order_id, full_name, phone, address_line1, address_line2, city, state, pincode, country)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        orderId,
+        address.full_name,
+        address.phone,
+        address.address_line1,
+        address.address_line2 || "",
+        address.city,
+        address.state,
+        address.pincode,
+        address.country || "India"
+      ]
+    );
+
+    console.log("🎉 ORDER COMPLETE");
+
+    return res.status(201).json({
+      success: true,
+      orderId
+    });
+
+  } catch (err) {
+    console.error("❌ CREATE ORDER ERROR:", err.message);
+    return res.status(500).json({ error: "Order failed" });
+  }
 };
 
 
@@ -134,32 +109,30 @@ exports.createOrder = (req, res) => {
 // ========== GET LOGGED-IN USER ORDERS ============
 // =================================================
 
-exports.getOrdersByUser = (req, res) => {
+exports.getOrdersByUser = async (req, res) => {
 
-  const userId = req.user?.id;
+  try {
 
-  if(!userId){
-    return res.json([]); // or return 401
-  }
+    const userId = req.user?.id;
 
-  const query = `
-    SELECT id, total_amount, status, payment_status, created_at
-    FROM orders
-    WHERE user_id = ?
-    ORDER BY created_at DESC
-  `;
-
-  db.pool.query(query, [userId], (err, results) => {
-
-    if (err) {
-      console.error("❌ Fetch user orders error:", err.message);
-      return res.status(500).json({ error: "Database error" });
+    if (!userId) {
+      return res.json([]);
     }
+
+    const results = await db.query(
+      `SELECT id, total_amount, status, payment_status, created_at
+       FROM orders
+       WHERE user_id = ?
+       ORDER BY created_at DESC`,
+      [userId]
+    );
 
     res.json(results);
 
-  });
-
+  } catch (err) {
+    console.error("❌ Fetch user orders error:", err.message);
+    return res.status(500).json({ error: "Database error" });
+  }
 };
 
 
@@ -167,41 +140,31 @@ exports.getOrdersByUser = (req, res) => {
 // ============== GET ORDER DETAILS ================
 // =================================================
 
-exports.getOrderDetails = (req, res) => {
+exports.getOrderDetails = async (req, res) => {
 
-  const orderId = req.params.id;
+  try {
 
-  db.pool.query(
-    "SELECT * FROM order_items WHERE order_id = ?",
-    [orderId],
-    (err, items) => {
+    const orderId = req.params.id;
 
-      if (err) {
-        console.error("❌ Fetch order items error:", err.message);
-        return res.status(500).json({ error: "Database error" });
-      }
+    const items = await db.query(
+      "SELECT * FROM order_items WHERE order_id = ?",
+      [orderId]
+    );
 
-      db.pool.query(
-        "SELECT * FROM order_address WHERE order_id = ?",
-        [orderId],
-        (err, address) => {
+    const address = await db.query(
+      "SELECT * FROM order_address WHERE order_id = ?",
+      [orderId]
+    );
 
-          if (err) {
-            console.error("❌ Fetch address error:", err.message);
-            return res.status(500).json({ error: "Database error" });
-          }
+    res.json({
+      items,
+      address: address[0] || null
+    });
 
-          res.json({
-            items,
-            address: address[0] || null
-          });
-
-        }
-      );
-
-    }
-  );
-
+  } catch (err) {
+    console.error("❌ Fetch order details error:", err.message);
+    return res.status(500).json({ error: "Database error" });
+  }
 };
 
 
@@ -209,31 +172,28 @@ exports.getOrderDetails = (req, res) => {
 // ============== ADMIN — GET ALL ORDERS ===========
 // =================================================
 
-exports.getAllOrders = (req, res) => {
+exports.getAllOrders = async (req, res) => {
 
-if (!req.user || req.user.role !== "admin") {
-  return res.status(403).json({
-      error: "Admin access only"
-    });
-  }
+  try {
 
-  const query = `
-    SELECT id, user_id, total_amount, status, payment_status, created_at
-    FROM orders
-    ORDER BY created_at DESC
-  `;
-
-  db.pool.query(query, (err, results) => {
-
-    if (err) {
-      console.error("❌ Fetch all orders error:", err.message);
-      return res.status(500).json({ error: "Database error" });
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).json({
+        error: "Admin access only"
+      });
     }
+
+    const results = await db.query(
+      `SELECT id, user_id, total_amount, status, payment_status, created_at
+       FROM orders
+       ORDER BY created_at DESC`
+    );
 
     res.json(results);
 
-  });
-
+  } catch (err) {
+    console.error("❌ Fetch all orders error:", err.message);
+    return res.status(500).json({ error: "Database error" });
+  }
 };
 
 
@@ -241,32 +201,30 @@ if (!req.user || req.user.role !== "admin") {
 // ========= UPDATE PAYMENT STATUS (WORKER) ========
 // =================================================
 
-exports.updatePaymentStatus = (req, res) => {
+exports.updatePaymentStatus = async (req, res) => {
 
-  const { orderId, status } = req.body;
+  try {
 
-  if (!orderId || !status) {
-    return res.status(400).json({
-      error: "orderId and status required"
-    });
-  }
+    const { orderId, status } = req.body;
 
-  db.pool.query(
-    "UPDATE orders SET payment_status = ? WHERE id = ?",
-    [status, orderId],
-    (err) => {
-
-      if (err) {
-        console.error("❌ Payment update error:", err.message);
-        return res.status(500).json({ error: "Update failed" });
-      }
-
-      res.json({
-        success: true,
-        message: "Order payment updated"
+    if (!orderId || !status) {
+      return res.status(400).json({
+        error: "orderId and status required"
       });
-
     }
-  );
 
+    await db.query(
+      "UPDATE orders SET payment_status = ? WHERE id = ?",
+      [status, orderId]
+    );
+
+    res.json({
+      success: true,
+      message: "Order payment updated"
+    });
+
+  } catch (err) {
+    console.error("❌ Payment update error:", err.message);
+    return res.status(500).json({ error: "Update failed" });
+  }
 };
