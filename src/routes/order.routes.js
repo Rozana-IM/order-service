@@ -8,14 +8,18 @@ const {
   getAllOrders
 } = require("../controllers/order.controller");
 
-const { verifyAdmin } = require("../middleware/auth.middleware");
+const { verifyToken, verifyAdmin } = require("../middleware/auth.middleware");
 
-// USER ROUTES
-router.post("/", createOrder);
-router.get("/", getOrdersByUser);
-router.get("/:id", getOrderDetails);
+/* 🔓 PUBLIC (ONLY HEALTH handled in app.js) */
 
-// 🔥 ADMIN ROUTE (IMPORTANT)
-router.get("/admin/all", verifyAdmin, getAllOrders);
+/* 🔐 USER ROUTES */
+router.post("/", verifyToken, createOrder);
+router.get("/", verifyToken, getOrdersByUser);
+
+/* 🔐 ADMIN ROUTE */
+router.get("/admin/all", verifyToken, verifyAdmin, getAllOrders);
+
+/* 🔐 ORDER DETAILS */
+router.get("/:id", verifyToken, getOrderDetails);
 
 module.exports = router;
