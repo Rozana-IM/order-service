@@ -1,7 +1,6 @@
 const express = require("express");
 const cors = require("cors");
 const { connect } = require("./db");
-const { verifyToken } = require("./middleware/auth.middleware");
 
 const app = express();
 
@@ -9,6 +8,7 @@ connect().catch(err => console.error("DB Error:", err));
 
 app.use(express.json());
 
+/* ✅ CORS (KEEP THIS) */
 app.use(cors({
   origin: [
     "https://rozana-projects.online",
@@ -22,10 +22,18 @@ app.use(cors({
 
 app.options("*", cors());
 
-/* ✅ PUBLIC HEALTH (FIXED) */
+/* ✅ ADD THIS HERE (VERY IMPORTANT) */
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "*");
+  next();
+});
+
+/* ✅ HEALTH ROUTES */
 app.get("/orders/health", (req, res) => {
   res.status(200).json({ status: "ok" });
 });
+
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "UP" });
 });
@@ -33,12 +41,11 @@ app.get("/health", (req, res) => {
 /* ✅ LOAD ROUTES */
 const orderRoutes = require("./routes/order.routes");
 
-/* ❌ REMOVE GLOBAL AUTH FROM /orders */
-/* app.use("/orders", verifyToken, orderRoutes); */
-
-/* ✅ APPLY AUTH ONLY INSIDE ROUTES */
+/* ✅ KEEP ONLY THIS (IMPORTANT) */
 app.use("/orders", orderRoutes);
-app.use("/orders/", orderRoutes); // 🔥 ADD THIS LINE
+
+/* ❌ REMOVE THIS LINE (CAUSES BUGS) */
+/* app.use("/orders/", orderRoutes); */
 
 app.listen(5000, "0.0.0.0", () => {
   console.log("✅ Order service LIVE");
