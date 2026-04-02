@@ -36,7 +36,7 @@ exports.createOrder = async (req, res) => {
     console.log("👉 INSERT ORDER");
 
     const result = await db.query(
-      "INSERT INTO orders (user_id, total_amount, status, payment_status) VALUES (?, ?, 'pending', 'pending')",
+      "INSERT INTO orders (user_id, total_amount, status, payment_status) VALUES (?, ?, 'PENDING', 'PENDING')",
       [userId, totalAmount]
     );
 
@@ -242,7 +242,7 @@ exports.updateOrderStatus = async (req, res) => {
 
     await db.query(
       `UPDATE orders 
-       SET status = ?, payment_status = 'paid', payment_id = ?
+       SET status = ?, payment_status = 'PAID', payment_id = ?
        WHERE id = ?`,
       [status, paymentId || null, orderId]
     );
