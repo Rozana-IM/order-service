@@ -16,8 +16,12 @@ router.put("/update-status", updateOrderStatus);
 
 // PUBLIC
 router.post("/create", verifyToken, createOrder);
+
 // SPECIFIC FIRST
-router.get("/admin/all", verifyToken, verifyAdmin, getAllOrders);
+const { verifyToken, isAdmin } = require("../middleware/auth");
+
+router.get("/admin/all", verifyToken, isAdmin, getAllOrders);
+router.put("/update-status", verifyToken, isAdmin, updateOrderStatus);
 
 // GENERAL ROUTES
 router.get("/", verifyToken, getOrdersByUser);
