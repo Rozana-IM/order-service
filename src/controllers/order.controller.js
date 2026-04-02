@@ -265,8 +265,9 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     // ✅ SEND EMAIL
-    await sendOrderEmail(userEmail, order);
-
+if (status === "PAID") {
+  await sendOrderEmail(userEmail, order);
+}
     res.json({ success: true });
 
   } catch (err) {
