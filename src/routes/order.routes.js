@@ -18,5 +18,6 @@ router.get("/admin/all", verifyToken, verifyAdmin, getAllOrders);
 // GENERAL ROUTES
 router.get("/", verifyToken, getOrdersByUser);
 router.get("/:id", verifyToken, getOrderDetails);
+router.put("/update-status", updateOrderStatus);
 
 module.exports = router;
