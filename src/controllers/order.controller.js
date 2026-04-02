@@ -229,31 +229,33 @@ exports.updatePaymentStatus = async (req, res) => {
 // =================================================
 // ========= UPDATE ORDER STATUS (WORKER) ========
 // =================================================
+const { sendOrderEmail } = require("../services/email.service");
+
 exports.updateOrderStatus = async (req, res) => {
   try {
 
     const { orderId, status, paymentId } = req.body;
 
-    if (!orderId || !status) {
-      return res.status(400).json({
-        error: "orderId and status required"
-      });
-    }
-
-    await db.query(
-      `UPDATE orders 
-       SET status = ?, payment_status = 'PAID', payment_id = ?
-       WHERE id = ?`,
-      [status, paymentId || null, orderId]
+    await db.execute(
+      "UPDATE orders SET status=?, payment_id=? WHERE id=?",
+      [status, paymentId, orderId]
     );
 
-    res.json({
-      success: true,
-      message: "Order status updated"
-    });
+    // ✅ GET ORDER DETAILS
+    const [rows] = await db.execute(
+      "SELECT * FROM orders WHERE id=?",
+      [orderId]
+    );
+
+    const order = rows[0];
+
+    // ✅ SEND EMAIL
+    await sendOrderEmail(order.email, order);
+
+    res.json({ success: true });
 
   } catch (err) {
-    console.error("❌ Order status update error:", err.message);
-    return res.status(500).json({ error: "Update failed" });
+    console.error(err);
+    res.status(500).json({ error: "Failed to update order" });
   }
 };
