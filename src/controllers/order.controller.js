@@ -226,3 +226,34 @@ exports.updatePaymentStatus = async (req, res) => {
     return res.status(500).json({ error: "Update failed" });
   }
 };
+// =================================================
+// ========= UPDATE ORDER STATUS (WORKER) ========
+// =================================================
+exports.updateOrderStatus = async (req, res) => {
+  try {
+
+    const { orderId, status, paymentId } = req.body;
+
+    if (!orderId || !status) {
+      return res.status(400).json({
+        error: "orderId and status required"
+      });
+    }
+
+    await db.query(
+      `UPDATE orders 
+       SET status = ?, payment_status = 'paid', payment_id = ?
+       WHERE id = ?`,
+      [status, paymentId || null, orderId]
+    );
+
+    res.json({
+      success: true,
+      message: "Order status updated"
+    });
+
+  } catch (err) {
+    console.error("❌ Order status update error:", err.message);
+    return res.status(500).json({ error: "Update failed" });
+  }
+};
