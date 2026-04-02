@@ -236,26 +236,41 @@ exports.updateOrderStatus = async (req, res) => {
 
     const { orderId, status, paymentId } = req.body;
 
-    await db.execute(
+    // ✅ UPDATE ORDER
+    await db.query(
       "UPDATE orders SET status=?, payment_id=? WHERE id=?",
       [status, paymentId, orderId]
     );
 
-    // ✅ GET ORDER DETAILS
-    const [rows] = await db.execute(
+    // ✅ GET ORDER
+    const orderRows = await db.query(
       "SELECT * FROM orders WHERE id=?",
       [orderId]
     );
 
-    const order = rows[0];
+    const order = orderRows[0];
+
+    // ✅ GET USER EMAIL
+    const userRows = await db.query(
+      "SELECT email FROM users WHERE id=?",
+      [order.user_id]
+    );
+
+    const userEmail = userRows[0]?.email;
+
+    // ❗ SAFETY CHECK
+    if (!userEmail) {
+      console.log("⚠️ No email found for user");
+      return res.json({ success: true });
+    }
 
     // ✅ SEND EMAIL
-    await sendOrderEmail(order.email, order);
+    await sendOrderEmail(userEmail, order);
 
     res.json({ success: true });
 
   } catch (err) {
-    console.error(err);
+    console.error("❌ updateOrderStatus error:", err.message);
     res.status(500).json({ error: "Failed to update order" });
   }
 };
