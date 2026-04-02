@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
+const { verifyToken, verifyAdmin } = require("../middleware/auth.middleware");
+
 const {
   createOrder,
   getOrdersByUser,
@@ -9,9 +11,8 @@ const {
   updateOrderStatus
 } = require("../controllers/order.controller");
 
-router.put("/update-status", verifyToken, updateOrderStatus);
-
-const { verifyToken, verifyAdmin } = require("../middleware/auth.middleware");
+// NOW routes
+router.put("/update-status", updateOrderStatus);
 
 // PUBLIC
 router.post("/create", verifyToken, createOrder);
