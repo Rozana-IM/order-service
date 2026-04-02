@@ -1,15 +1,14 @@
 const db = require("../db");
+const { sendOrderEmail } = require("../services/email.service");
 
 // =================================================
 // ================= CREATE ORDER =================
 // =================================================
 
 exports.createOrder = async (req, res) => {
-
   console.log("🚀 CREATE ORDER START");
 
   try {
-
     const userId = req.user?.id;
     const { items, totalAmount, address } = req.body;
 
@@ -33,44 +32,37 @@ exports.createOrder = async (req, res) => {
     // 1️⃣ CREATE ORDER
     // ================================
 
-    console.log("👉 INSERT ORDER");
-
     const result = await db.query(
       "INSERT INTO orders (user_id, total_amount, status, payment_status) VALUES (?, ?, 'PENDING', 'PENDING')",
       [userId, totalAmount]
     );
 
     const orderId = result.insertId;
-
     console.log("✅ ORDER CREATED:", orderId);
 
     // ================================
     // 2️⃣ INSERT ITEMS
     // ================================
 
-   console.log("👉 INSERT ITEMS");
+    const orderItems = items.map(item => [
+      orderId,
+      item.product_id,
+      item.quantity,
+      item.price
+    ]);
 
-const orderItems = items.map(item => [
-  orderId,
-  item.product_id,
-  item.quantity,
-  item.price
-]);
+    await db.pool.query(
+      `INSERT INTO order_items 
+       (order_id, product_id, quantity, price)
+       VALUES ?`,
+      [orderItems]
+    );
 
-await db.pool.query(
-  `INSERT INTO order_items 
-   (order_id, product_id, quantity, price)
-   VALUES ?`,
-  [orderItems]
-);
-
-console.log("✅ ITEMS INSERTED");
+    console.log("✅ ITEMS INSERTED");
 
     // ================================
     // 3️⃣ INSERT ADDRESS
     // ================================
-
-    console.log("👉 INSERT ADDRESS");
 
     await db.query(
       `INSERT INTO order_address
@@ -108,9 +100,7 @@ console.log("✅ ITEMS INSERTED");
 // =================================================
 
 exports.getOrdersByUser = async (req, res) => {
-
   try {
-
     const userId = req.user?.id;
 
     if (!userId) {
@@ -139,9 +129,7 @@ exports.getOrdersByUser = async (req, res) => {
 // =================================================
 
 exports.getOrderDetails = async (req, res) => {
-
   try {
-
     const orderId = req.params.id;
 
     const items = await db.query(
@@ -171,7 +159,6 @@ exports.getOrderDetails = async (req, res) => {
 // =================================================
 
 exports.getAllOrders = async (req, res) => {
-
   try {
 
     if (!req.user || req.user.role !== "admin") {
@@ -196,13 +183,11 @@ exports.getAllOrders = async (req, res) => {
 
 
 // =================================================
-// ========= UPDATE PAYMENT STATUS (WORKER) ========
+// ========= UPDATE PAYMENT STATUS (OPTIONAL) =======
 // =================================================
 
 exports.updatePaymentStatus = async (req, res) => {
-
   try {
-
     const { orderId, status } = req.body;
 
     if (!orderId || !status) {
@@ -226,29 +211,39 @@ exports.updatePaymentStatus = async (req, res) => {
     return res.status(500).json({ error: "Update failed" });
   }
 };
+
+
 // =================================================
-// ========= UPDATE ORDER STATUS (WORKER) ========
+// ========= UPDATE ORDER STATUS (MAIN LOGIC) =======
 // =================================================
-const { sendOrderEmail } = require("../services/email.service");
 
 exports.updateOrderStatus = async (req, res) => {
   try {
-
     const { orderId, status, paymentId } = req.body;
+
+    if (!orderId || !status) {
+      return res.status(400).json({
+        error: "orderId and status required"
+      });
+    }
 
     // ✅ UPDATE ORDER
     await db.query(
       "UPDATE orders SET status=?, payment_id=? WHERE id=?",
-      [status, paymentId, orderId]
+      [status, paymentId || null, orderId]
     );
 
-    // ✅ GET ORDER
+    // ✅ GET ORDER DETAILS
     const orderRows = await db.query(
       "SELECT * FROM orders WHERE id=?",
       [orderId]
     );
 
     const order = orderRows[0];
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
 
     // ✅ GET USER EMAIL
     const userRows = await db.query(
@@ -258,16 +253,17 @@ exports.updateOrderStatus = async (req, res) => {
 
     const userEmail = userRows[0]?.email;
 
-    // ❗ SAFETY CHECK
     if (!userEmail) {
       console.log("⚠️ No email found for user");
       return res.json({ success: true });
     }
 
-    // ✅ SEND EMAIL
-if (status === "PAID") {
-  await sendOrderEmail(userEmail, order);
-}
+    // ✅ SEND EMAIL ONLY WHEN PAID
+    if (status === "PAID") {
+      await sendOrderEmail(userEmail, order);
+      console.log("📩 Email sent to:", userEmail);
+    }
+
     res.json({ success: true });
 
   } catch (err) {
