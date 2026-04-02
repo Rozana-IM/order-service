@@ -6,8 +6,10 @@ const {
   getOrdersByUser,
   getOrderDetails,
   getAllOrders,
-  updateOrderStatus   
+  updateOrderStatus
 } = require("../controllers/order.controller");
+
+router.put("/update-status", verifyToken, updateOrderStatus);
 
 const { verifyToken, verifyAdmin } = require("../middleware/auth.middleware");
 
@@ -19,6 +21,5 @@ router.get("/admin/all", verifyToken, verifyAdmin, getAllOrders);
 // GENERAL ROUTES
 router.get("/", verifyToken, getOrdersByUser);
 router.get("/:id", verifyToken, getOrderDetails);
-router.put("/update-status", updateOrderStatus);
 
 module.exports = router;
