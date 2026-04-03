@@ -260,9 +260,13 @@ exports.updateOrderStatus = async (req, res) => {
 
     // ✅ SEND EMAIL ONLY WHEN PAID
     if (status === "PAID") {
-      await sendOrderEmail(userEmail, order);
-      console.log("📩 Email sent to:", userEmail);
-    }
+  try {
+    await sendOrderEmail(userEmail, order);
+    console.log("📩 Email sent to:", userEmail);
+  } catch (err) {
+    console.error("❌ Email failed:", err.message);
+  }
+}
 
     res.json({ success: true });
 
