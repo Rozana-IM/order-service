@@ -1,33 +1,36 @@
-const nodemailer = require("nodemailer");
+const { SESClient, SendEmailCommand } = require("@aws-sdk/client-ses");
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+const client = new SESClient({
+  region: "ap-south-1",
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_SECRET_KEY
   }
 });
 
-exports.sendOrderEmail = async (email, order) => {
-  try {
+exports.sendOrderEmail = async (to, order) => {
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "LUCCI Order Confirmation",
-      html: `
-        <h2>Order Confirmed 🎉</h2>
-        <p><b>Order ID:</b> ${order.id}</p>
-        <p><b>Total:</b> ₹${order.total}</p>
-        <p>Status: ${order.status}</p>
-        <br/>
-        <p>Your delivery will arrive in 2 days 🚚</p>
-      `
-    });
+  const params = {
+    Source: process.env.EMAIL_FROM,
+    Destination: {
+      ToAddresses: [to]
+    },
+    Message: {
+      Subject: {
+        Data: "🛍️ LUCCI Order Confirmation"
+      },
+      Body: {
+        Html: {
+          Data: `
+            <h2>Order Confirmed 🎉</h2>
+            <p><b>Order ID:</b> ${order.id}</p>
+            <p><b>Total:</b> ₹${order.total}</p>
+            <p>Status: ${order.status}</p>
+          `
+        }
+      }
+    }
+  };
 
-    console.log("✅ Email sent");
-
-  } catch (err) {
-    console.error("❌ Email error:", err.message);
-  }
+  await client.send(new SendEmailCommand(params));
 };
