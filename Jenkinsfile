@@ -40,7 +40,10 @@ pipeline {
         sh '''
         #!/bin/bash
         set -eux
-        docker build -t $ECR_REPO:$IMAGE_TAG .
+
+        docker system prune -af || true
+
+        docker build --no-cache -t $ECR_REPO:$IMAGE_TAG .
 
         docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
         docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:latest
