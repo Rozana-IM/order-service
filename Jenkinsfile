@@ -45,9 +45,7 @@ pipeline {
         set -eux
 
         docker system prune -af || true
-        docker build \
-        --progress=plain \
-        -t $ECR_REPO:$IMAGE_TAG .
+        DOCKER_BUILDKIT=0 docker build -t order-service:27 .
   
         docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
         docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:latest
