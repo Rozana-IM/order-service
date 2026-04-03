@@ -45,9 +45,10 @@ pipeline {
         set -eux
 
         docker system prune -af || true
-
-        docker build --no-cache -t $ECR_REPO:$IMAGE_TAG .
-
+        docker build \
+        --progress=plain \
+        -t $ECR_REPO:$IMAGE_TAG .
+  
         docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
         docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:latest
 
