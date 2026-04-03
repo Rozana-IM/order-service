@@ -12,9 +12,6 @@ pipeline {
         ECS_CLUSTER = "lucci-cluster"
         ECS_SERVICE = "order-service-service-dehx0nya"
         TASK_FAMILY = "order-service"
-
-        DOCKER_BUILDKIT = "1"
-
     }
 
     stages {
@@ -28,7 +25,6 @@ pipeline {
         stage('Login ECR') {
             steps {
                 sh '''
-                #!/bin/bash
                 set -eux
 
                 aws ecr get-login-password --region $AWS_REGION | \
@@ -39,27 +35,29 @@ pipeline {
         }
 
         stage('Build & Push Image') {
-    steps {
-        sh '''
-        #!/bin/bash
-        set -eux
+            steps {
+                sh '''
+                set -eux
 
-        docker system prune -af || true
-        DOCKER_BUILDKIT=0 docker build -t order-service:27 .
-  
-        docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
-        docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:latest
+                docker system prune -af || true
 
-        docker push $ECR_URI:$IMAGE_TAG
-        docker push $ECR_URI:latest
-        '''
-    }
-}
+                # ✅ BUILD WITH CORRECT TAG
+                docker build -t $ECR_REPO:$IMAGE_TAG .
+
+                # ✅ TAG FOR ECR
+                docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
+                docker tag $ECR_REPO:$IMAGE_TAG $ECR_URI:latest
+
+                # ✅ PUSH
+                docker push $ECR_URI:$IMAGE_TAG
+                docker push $ECR_URI:latest
+                '''
+            }
+        }
 
         stage('Create NEW Task Revision') {
             steps {
                 sh '''
-                #!/bin/bash
                 set -eux
 
                 aws ecs describe-task-definition \
@@ -99,7 +97,6 @@ pipeline {
         stage('Deploy New Revision') {
             steps {
                 sh '''
-                #!/bin/bash
                 set -eux
 
                 REVISION=$(cat revision.txt)
