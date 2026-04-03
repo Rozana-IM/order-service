@@ -12,6 +12,9 @@ pipeline {
         ECS_CLUSTER = "lucci-cluster"
         ECS_SERVICE = "order-service-service-dehx0nya"
         TASK_FAMILY = "order-service"
+
+        DOCKER_BUILDKIT = "1"
+
     }
 
     stages {
