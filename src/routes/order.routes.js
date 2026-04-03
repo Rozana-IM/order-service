@@ -24,6 +24,5 @@ router.get("/:id", verifyToken, getOrderDetails);
 router.get("/admin/all", verifyToken, verifyAdmin, getAllOrders);
 
 // ✅ Update order status
-router.put("/update-status", verifyToken, verifyAdmin, updateOrderStatus);
-
+router.put("/update-status", updateOrderStatus);
 module.exports = router;
