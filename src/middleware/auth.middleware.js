@@ -1,12 +1,16 @@
 const jwt = require("jsonwebtoken");
 
 /* =====================================
-   VERIFY USER TOKEN
+   SERVICE TOKEN (FOR MICROSERVICES)
+===================================== */
+const SERVICE_TOKEN = process.env.SERVICE_TOKEN;
+
+/* =====================================
+   VERIFY USER / SERVICE TOKEN
 ===================================== */
 
 exports.verifyToken = (req, res, next) => {
 
-  // 🔥 DEBUG LOG (VERY IMPORTANT)
   console.log("🚨 VERIFY TOKEN HIT:", req.method, req.originalUrl);
 
   const authHeader = req.headers.authorization;
@@ -20,6 +24,22 @@ exports.verifyToken = (req, res, next) => {
 
   const token = authHeader.split(" ")[1];
 
+  /* ===============================
+     ✅ SERVICE-TO-SERVICE ACCESS
+  =============================== */
+  if (token === SERVICE_TOKEN) {
+    console.log("🤖 Service token accepted");
+
+    req.user = {
+      role: "service"
+    };
+
+    return next();
+  }
+
+  /* ===============================
+     ✅ NORMAL USER JWT VERIFY
+  =============================== */
   try {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
