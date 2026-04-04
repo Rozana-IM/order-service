@@ -1,5 +1,4 @@
 const db = require("../db");
-const { sendOrderEmail } = require("../services/email.service");
 
 // =================================================
 // ================= CREATE ORDER =================
@@ -217,8 +216,13 @@ exports.updatePaymentStatus = async (req, res) => {
 // ========= UPDATE ORDER STATUS (MAIN LOGIC) =======
 // =================================================
 
+// =================================================
+// ========= UPDATE ORDER STATUS (MAIN LOGIC) =======
+// =================================================
+
 exports.updateOrderStatus = async (req, res) => {
   try {
+
     const { orderId, status, paymentId } = req.body;
 
     if (!orderId || !status) {
@@ -233,45 +237,18 @@ exports.updateOrderStatus = async (req, res) => {
       [status, paymentId || null, orderId]
     );
 
-    // ✅ GET ORDER DETAILS
-    const orderRows = await db.query(
-      "SELECT * FROM orders WHERE id=?",
-      [orderId]
-    );
+    console.log("✅ ORDER STATUS UPDATED:", orderId);
 
-    const order = orderRows[0];
-
-    if (!order) {
-      return res.status(404).json({ error: "Order not found" });
-    }
-
-    // ✅ GET USER EMAIL
-    const userRows = await db.query(
-      "SELECT email FROM users WHERE id=?",
-      [order.user_id]
-    );
-
-    const userEmail = userRows[0]?.email;
-
-    if (!userEmail) {
-      console.log("⚠️ No email found for user");
-      return res.json({ success: true });
-    }
-
-    // ✅ SEND EMAIL ONLY WHEN PAID
-    if (status === "PAID") {
-  try {
-    await sendOrderEmail(userEmail, order);
-    console.log("📩 Email sent to:", userEmail);
-  } catch (err) {
-    console.error("❌ Email failed:", err.message);
-  }
-}
-
-    res.json({ success: true });
+    return res.json({
+      success: true
+    });
 
   } catch (err) {
+
     console.error("❌ updateOrderStatus error:", err.message);
-    res.status(500).json({ error: "Failed to update order" });
+
+    return res.status(500).json({
+      error: "Failed to update order"
+    });
   }
 };
