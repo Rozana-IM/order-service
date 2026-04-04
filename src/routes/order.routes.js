@@ -21,8 +21,7 @@ router.get("/:id", verifyToken, getOrderDetails);
 /* ================= ADMIN ================= */
 
 // ✅ View all orders
-router.get("/admin/all", getAllOrders);
-
+router.get("/admin/all", verifyToken, verifyAdmin, getAllOrders);
 // ✅ Update order status
 router.put("/update-status", verifyToken, updateOrderStatus);
 module.exports = router;
