@@ -11,6 +11,8 @@ const {
 
 const { verifyToken } = require("../middleware/auth.middleware");
 
+console.log("getAllOrders:", getAllOrders);
+
 /* ================= USER ================= */
 
 router.post("/create", verifyToken, createOrder);
