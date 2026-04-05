@@ -15,11 +15,8 @@ const { verifyToken } = require("../middleware/auth.middleware");
 
 router.post("/create", verifyToken, createOrder);
 router.get("/", verifyToken, getOrdersByUser);
-router.get("/:id", verifyToken, getOrderDetails);
-
-/* ================= ADMIN ================= */
-
 router.get("/admin/all", verifyToken, getAllOrders);
+router.get("/:id", verifyToken, getOrderDetails);
 
 /* ================= UPDATE ================= */
 
