@@ -12,7 +12,7 @@ exports.createOrder = async (req, res) => {
     const { items, totalAmount, address } = req.body;
 
     console.log("👤 USER:", userId);
-    console.log("📦 ITEMS:", items?.length);
+    console.log("📦 ITEMS FULL:", items);
     console.log("💰 TOTAL:", totalAmount);
 
     if (!items || items.length === 0) {
