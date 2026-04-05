@@ -5,15 +5,9 @@ const db = require("../db");
 // =================================================
 
 exports.createOrder = async (req, res) => {
-  console.log("🚀 CREATE ORDER START");
-
   try {
     const userId = req.user?.id;
-    const { items, totalAmount, address } = req.body;
-
-    console.log("👤 USER:", userId);
-    console.log("📦 ITEMS FULL:", items);
-    console.log("💰 TOTAL:", totalAmount);
+    let { items, totalAmount, address } = req.body;
 
     if (!items || items.length === 0) {
       return res.status(400).json({ error: "Order items required" });
@@ -37,32 +31,45 @@ exports.createOrder = async (req, res) => {
     );
 
     const orderId = result.insertId;
-    console.log("✅ ORDER CREATED:", orderId);
 
     // ================================
     // 2️⃣ INSERT ITEMS
     // ================================
 
     const orderItems = items.map(item => [
-  orderId,
-  item.product_id,
-  item.quantity,
-  item.price,
-  item.product_name,
-  item.image_url
-]);
+      orderId,
+      Number(item.product_id),
+      Number(item.quantity),
+      Number(item.price),
+      item.product_name || "Product",
+      item.image_url || ""
+    ]);
 
     await db.pool.query(`
-  INSERT INTO order_items 
-  (order_id, product_id, quantity, price, product_name, image_url)
-  VALUES ?`,
-  [orderItems]
-);
-
-    console.log("✅ ITEMS INSERTED");
+      INSERT INTO order_items 
+      (order_id, product_id, quantity, price, product_name, image_url)
+      VALUES ?
+    `, [orderItems]);
 
     // ================================
-    // 3️⃣ INSERT ADDRESS
+    // 3️⃣ HANDLE ADDRESS
+    // ================================
+
+    if (address.addressId) {
+      const addr = await db.query(
+        "SELECT * FROM user_addresses WHERE id = ?",
+        [address.addressId]
+      );
+
+      if (!addr || addr.length === 0) {
+        return res.status(400).json({ error: "Invalid address selected" });
+      }
+
+      address = addr[0];
+    }
+
+    // ================================
+    // INSERT ADDRESS
     // ================================
 
     await db.query(
@@ -82,214 +89,13 @@ exports.createOrder = async (req, res) => {
       ]
     );
 
-    console.log("🎉 ORDER COMPLETE");
-
     return res.status(201).json({
       success: true,
       orderId
     });
 
   } catch (err) {
-    console.error("❌ CREATE ORDER ERROR:", err.message);
+    console.error("❌ CREATE ORDER ERROR:", err);
     return res.status(500).json({ error: "Order failed" });
-  }
-};
-
-
-// =================================================
-// ========== GET LOGGED-IN USER ORDERS ============
-// =================================================
-exports.getOrdersByUser = async (req, res) => {
-  try {
-
-    const userId = req.user?.id;
-    if (!userId) return res.json([]);
-
-    const results = await db.query(`
-  SELECT 
-    o.id,
-    o.total_amount,
-    o.status,
-    o.payment_status,
-    o.created_at,
-
-    MIN(oi.quantity) AS quantity,
-    MIN(oi.product_name) AS product_name,
-    MIN(oi.image_url) AS image_url
-
-  FROM orders o
-
-  LEFT JOIN order_items oi 
-    ON o.id = oi.order_id
-
-  WHERE o.user_id = ?
-
-  GROUP BY o.id
-  ORDER BY o.created_at DESC
-`, [userId]);
-    
-    res.json(results);
-
-  } catch (err) {
-    console.error("❌ Fetch user orders error:", err);
-    res.status(500).json({ error: "Database error" });
-  }
-};
-// =================================================
-// ============== GET ORDER DETAILS ================
-// =================================================
-exports.getOrderDetails = async (req, res) => {
-  try {
-
-    const orderId = req.params.id;
-
-    // ===============================
-    // 1️⃣ GET ORDER
-    // ===============================
-    const order = await db.query(
-      `SELECT id, user_id, total_amount, status, payment_status, created_at
-       FROM orders
-       WHERE id = ? AND user_id = ?`,
-  [orderId, req.user.id]
-    );
-
-    if (!order || order.length === 0) {
-      return res.status(404).json({ error: "Order not found" });
-    }
-
-    // ===============================
-    // 2️⃣ GET ITEMS (WITH PRODUCT DATA)
-    // ===============================
-    const items = await db.query(`
-  SELECT 
-    product_id,
-    quantity,
-    price,
-    product_name,
-    image_url
-  FROM order_items
-  WHERE order_id = ?
-`, [orderId]);
-
-    // ===============================
-    // 3️⃣ GET ADDRESS
-    // ===============================
-    const address = await db.query(
-      `SELECT * FROM order_address WHERE order_id = ?`,
-      [orderId]
-    );
-
-    // ===============================
-    // RESPONSE
-    // ===============================
-    return res.json({
-      ...order[0],
-      items,
-      address: address[0] || null
-    });
-
-  } catch (err) {
-    console.error("❌ Fetch order details error:", err.message);
-    return res.status(500).json({ error: "Database error" });
-  }
-};
-// =================================================
-// ============== ADMIN — GET ALL ORDERS ===========
-// =================================================
-exports.getAllOrders = async (req, res) => {
-  try {
-
-    if (!req.user || req.user.role !== "admin") {
-      return res.status(403).json({ error: "Admin access only" });
-    }
-
-    const results = await db.query(`
-  SELECT id, user_id, total_amount, status, payment_status, created_at
-  FROM orders
-  WHERE status != 'FAILED'
-  ORDER BY created_at DESC
-`);
-
-    res.json(results);
-
-  } catch (err) {
-    console.error("❌ Fetch all orders error:", err.message);
-    res.status(500).json({ error: "Database error" });
-  }
-};
-// =================================================
-// ========= UPDATE PAYMENT STATUS (OPTIONAL) =======
-// =================================================
-
-exports.updatePaymentStatus = async (req, res) => {
-  try {
-    const { orderId, status } = req.body;
-
-    if (!orderId || !status) {
-      return res.status(400).json({
-        error: "orderId and status required"
-      });
-    }
-
-    await db.query(
-      "UPDATE orders SET payment_status = ? WHERE id = ?",
-      [status, orderId]
-    );
-
-    res.json({
-      success: true,
-      message: "Order payment updated"
-    });
-
-  } catch (err) {
-    console.error("❌ Payment update error:", err.message);
-    return res.status(500).json({ error: "Update failed" });
-  }
-};
-// =================================================
-// ========= UPDATE ORDER STATUS (MAIN LOGIC) =======
-// =================================================
-exports.updateOrderStatus = async (req, res) => {
-  try {
-
-    const { orderId, status, paymentId } = req.body;
-
-    if (!orderId || !status) {
-      return res.status(400).json({
-        error: "orderId and status required"
-      });
-    }
-
-    // ✅ CORRECT LOGIC
-    let paymentStatus = "PENDING";
-
-    if (["PAID", "SUCCESS", "COMPLETED"].includes(status)) {
-      paymentStatus = "PAID";
-    } 
-    else if (status === "FAILED") {
-      paymentStatus = "FAILED";
-    }
-
-    await db.query(
-      `UPDATE orders 
-       SET status = ?, 
-           payment_status = ?, 
-           payment_id = ?
-       WHERE id = ?`,
-      [
-        status,
-        paymentStatus,
-        paymentId || null,
-        orderId
-      ]
-    );
-
-    console.log("✅ ORDER + PAYMENT UPDATED:", orderId);
-
-    return res.json({ success: true });
-
-  } catch (err) {
-    console.error("❌ updateOrderStatus error:", err.message);
-    return res.status(500).json({ error: "Failed to update order" });
   }
 };
