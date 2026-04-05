@@ -101,37 +101,39 @@ exports.getOrdersByUser = async (req, res) => {
   try {
 
     const userId = req.user?.id;
-
     if (!userId) return res.json([]);
 
     const results = await db.query(`
-      SELECT 
-        o.id,
-        o.total_amount,
-        o.status,
-        o.payment_status,
-        o.created_at,
+  SELECT 
+    o.id,
+    o.total_amount,
+    o.status,
+    o.payment_status,
+    o.created_at,
 
-        oi.quantity,
+    MIN(oi.quantity) AS quantity,
+    MIN(p.name) AS product_name,
+    MIN(p.image_url) AS image_url
 
-        p.name AS product_name,
-        p.image_url
+  FROM orders o
 
-      FROM orders o
+  LEFT JOIN order_items oi 
+    ON o.id = oi.order_id
 
-      LEFT JOIN order_items oi ON o.id = oi.order_id
-      LEFT JOIN products p ON oi.product_id = p.id
+  LEFT JOIN products p 
+    ON oi.product_id = p.id
 
-      WHERE o.user_id = ?
-      GROUP BY o.id
-      ORDER BY o.created_at DESC
-    `, [userId]);
+  WHERE o.user_id = ?
 
+  GROUP BY o.id
+  ORDER BY o.created_at DESC
+`, [userId]);
+    
     res.json(results);
 
   } catch (err) {
     console.error("❌ Fetch user orders error:", err);
-    return res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 };
 // =================================================
@@ -204,18 +206,18 @@ exports.getAllOrders = async (req, res) => {
       return res.status(403).json({ error: "Admin access only" });
     }
 
-    const results = await db.query(
-      `SELECT id, user_id, total_amount, status, payment_status, created_at
-       FROM orders
-       WHERE status IN ('PLACED', 'PAID')   -- ✅ CORRECT
-       ORDER BY created_at DESC`
-    );
+    const results = await db.query(`
+  SELECT id, user_id, total_amount, status, payment_status, created_at
+  FROM orders
+  WHERE status != 'FAILED'
+  ORDER BY created_at DESC
+`);
 
     res.json(results);
 
   } catch (err) {
     console.error("❌ Fetch all orders error:", err.message);
-    return res.status(500).json({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   }
 };
 // =================================================
