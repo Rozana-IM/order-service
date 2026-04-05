@@ -244,3 +244,18 @@ exports.updateOrderStatus = async (req, res) => {
     res.status(500).json({ error: "Update failed" });
   }
 };
+
+
+exports.getAllOrders = async (req, res) => {
+  try {
+    const orders = await db.query(`
+      SELECT * FROM orders ORDER BY created_at DESC
+    `);
+
+    res.json(orders);
+
+  } catch (err) {
+    console.error("❌ Fetch all orders error:", err);
+    res.status(500).json({ error: "Database error" });
+  }
+};
