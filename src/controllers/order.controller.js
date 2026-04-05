@@ -103,13 +103,30 @@ exports.getOrdersByUser = async (req, res) => {
 
     if (!userId) return res.json([]);
 
-    const results = await db.query(
-      `SELECT id, total_amount, status, payment_status, created_at
-       FROM orders
-       WHERE user_id = ?
-       ORDER BY created_at DESC`,
-      [userId]
-    );
+    const results = await db.query(`
+      SELECT 
+        o.id,
+        o.total_amount,
+        o.status,
+        o.payment_status,
+        o.created_at,
+
+        p.name AS product_name,
+        p.image_url,
+        oi.quantity
+
+      FROM orders o
+
+      LEFT JOIN order_items oi 
+        ON o.id = oi.order_id
+
+      LEFT JOIN products p 
+        ON oi.product_id = p.id
+
+      WHERE o.user_id = ?
+      GROUP BY o.id
+      ORDER BY o.created_at DESC
+    `, [userId]);
 
     res.json(results);
 
@@ -118,7 +135,6 @@ exports.getOrdersByUser = async (req, res) => {
     return res.status(500).json({ error: "Database error" });
   }
 };
-
 // =================================================
 // ============== GET ORDER DETAILS ================
 // =================================================
@@ -235,7 +251,6 @@ exports.updatePaymentStatus = async (req, res) => {
 // =================================================
 // ========= UPDATE ORDER STATUS (MAIN LOGIC) =======
 // =================================================
-
 exports.updateOrderStatus = async (req, res) => {
   try {
 
@@ -247,23 +262,29 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
+    // ✅ CORRECT LOGIC
+    let paymentStatus = "PENDING";
+
+    if (["PAID", "SUCCESS", "COMPLETED"].includes(status)) {
+      paymentStatus = "PAID";
+    } 
+    else if (status === "FAILED") {
+      paymentStatus = "FAILED";
+    }
+
     await db.query(
-  `UPDATE orders 
-   SET status = ?, 
-       payment_status = ?, 
-       payment_id = ?
-   WHERE id = ?`,
-  [
-    status,
-    status === "PAID" 
-      ? "PAID"
-      : status === "FAILED"
-      ? "FAILED"
-      : "PENDING",
-    paymentId || null,
-    orderId
-  ]
-);
+      `UPDATE orders 
+       SET status = ?, 
+           payment_status = ?, 
+           payment_id = ?
+       WHERE id = ?`,
+      [
+        status,
+        paymentStatus,
+        paymentId || null,
+        orderId
+      ]
+    );
 
     console.log("✅ ORDER + PAYMENT UPDATED:", orderId);
 
