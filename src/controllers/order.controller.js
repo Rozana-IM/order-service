@@ -112,16 +112,13 @@ exports.getOrdersByUser = async (req, res) => {
     o.created_at,
 
     MIN(oi.quantity) AS quantity,
-    MIN(p.name) AS product_name,
-    MIN(p.image_url) AS image_url
+    MIN(oi.product_name) AS product_name,
+    MIN(oi.image_url) AS image_url
 
   FROM orders o
 
   LEFT JOIN order_items oi 
     ON o.id = oi.order_id
-
-  LEFT JOIN products p 
-    ON oi.product_id = p.id
 
   WHERE o.user_id = ?
 
@@ -162,17 +159,16 @@ exports.getOrderDetails = async (req, res) => {
     // 2️⃣ GET ITEMS (WITH PRODUCT DATA)
     // ===============================
     const items = await db.query(
-      `SELECT 
-        oi.product_id,
-        oi.quantity,
-        oi.price,
-        p.name AS product_name,
-        p.image_url
-      FROM order_items oi
-      LEFT JOIN products p ON oi.product_id = p.id
-      WHERE oi.order_id = ?`,
-      [orderId]
-    );
+  `SELECT 
+    product_id,
+    quantity,
+    price,
+    product_name,
+    image_url
+  FROM order_items
+  WHERE order_id = ?`,
+  [orderId]
+);
 
     // ===============================
     // 3️⃣ GET ADDRESS
