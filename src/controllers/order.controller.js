@@ -99,6 +99,7 @@ exports.createOrder = async (req, res) => {
 // =================================================
 exports.getOrdersByUser = async (req, res) => {
   try {
+
     const userId = req.user?.id;
 
     if (!userId) return res.json([]);
@@ -111,17 +112,15 @@ exports.getOrdersByUser = async (req, res) => {
         o.payment_status,
         o.created_at,
 
+        oi.quantity,
+
         p.name AS product_name,
-        p.image_url,
-        oi.quantity
+        p.image_url
 
       FROM orders o
 
-      LEFT JOIN order_items oi 
-        ON o.id = oi.order_id
-
-      LEFT JOIN products p 
-        ON oi.product_id = p.id
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      LEFT JOIN products p ON oi.product_id = p.id
 
       WHERE o.user_id = ?
       GROUP BY o.id
@@ -131,7 +130,7 @@ exports.getOrdersByUser = async (req, res) => {
     res.json(results);
 
   } catch (err) {
-    console.error("❌ Fetch user orders error:", err.message);
+    console.error("❌ Fetch user orders error:", err);
     return res.status(500).json({ error: "Database error" });
   }
 };
