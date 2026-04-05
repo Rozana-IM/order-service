@@ -75,18 +75,9 @@ exports.createOrder = async (req, res) => {
        3️⃣ HANDLE ADDRESS
     ================================= */
 
-    if (address.addressId) {
-      const [addr] = await connection.query(
-        "SELECT * FROM user_addresses WHERE id = ? AND user_id = ?",
-        [address.addressId, userId]
-      );
-
-      if (!addr || addr.length === 0) {
-        throw new Error("Invalid address selected"); // ❗ important for rollback
-      }
-
-      address = addr[0];
-    }
+    if (!address.full_name) {
+  throw new Error("Address data missing");
+}
 
     if (
       !address.full_name ||
