@@ -17,7 +17,9 @@ console.log("getAllOrders:", getAllOrders);
 
 router.post("/create", verifyToken, createOrder);
 router.get("/", verifyToken, getOrdersByUser);
-router.get("/admin/all", verifyToken, getAllOrders);
+router.get("/admin/all", verifyToken, (req, res) => {
+  res.send("WORKING");
+});
 router.get("/:id", verifyToken, getOrderDetails);
 
 /* ================= UPDATE ================= */
