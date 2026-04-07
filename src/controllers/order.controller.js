@@ -93,10 +93,13 @@ exports.createOrder = async (req, res) => {
     /* ================================
        4️⃣ INSERT ADDRESS
     ================================= */
-    await connection.query(
+    console.log("ADDRESS:", address);
+     address.address_line2 = address.address_line2 || "";
+     
+     await connection.query(
       `INSERT INTO order_address
-      (order_id, full_name, phone, address_line1, address_line2, city, state, pincode, country)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+(order_id, full_name, phone, address_line1, address_line2, city, state, pincode, country)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderId,
         address.full_name || null,
